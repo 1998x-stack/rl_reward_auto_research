@@ -50,3 +50,35 @@ def discover_rewards(module_name: str = "reward") -> List[Reward]:
                 continue
 
     return discovered
+
+
+class RewardBaselineCartPole(Reward):
+    name = "baseline"
+    env_id = "CartPole-v1"
+
+    def compute(self, obs, action, env_reward, terminated, truncated, info, env_info):
+        return env_reward
+
+
+class RewardBaselineAcrobot(Reward):
+    name = "baseline"
+    env_id = "Acrobot-v1"
+
+    def compute(self, obs, action, env_reward, terminated, truncated, info, env_info):
+        return env_reward
+
+
+class RewardBaselineMountainCar(Reward):
+    name = "baseline"
+    env_id = "MountainCar-v0"
+
+    def compute(self, obs, action, env_reward, terminated, truncated, info, env_info):
+        return env_reward
+
+
+class RewardBaselinePendulum(Reward):
+    name = "baseline"
+    env_id = "Pendulum-v1"
+
+    def compute(self, obs, action, env_reward, terminated, truncated, info, env_info):
+        return env_reward
