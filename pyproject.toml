@@ -1,0 +1,19 @@
+[project]
+name = "rl-reward-autoresearch"
+version = "0.1.0"
+description = "Autonomous RL reward function research — Pareto optimization for gymnasium classic-control"
+requires-python = ">=3.10"
+dependencies = [
+    "gymnasium[classic-control]>=1.0.0",
+    "torch>=2.0.0",
+    "numpy>=1.24.0",
+    "loguru>=0.7.0",
+    "pytest>=7.0.0",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["."]
