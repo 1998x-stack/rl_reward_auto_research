@@ -55,11 +55,12 @@ def establish_baselines(output_results: List[Dict]) -> Dict[str, Dict]:
 
         logger.info(f"Establishing baseline for {env_id}...")
 
+        _env_id = env_id
         class BaselineReward(Reward):
             name = "baseline"
-            env_id = env_id
+            env_id = _env_id
 
-            def compute(self, obs, action, env_reward, terminated, truncated, info, einfo):
+            def compute(self, obs, action, env_reward, terminated, truncated, info, env_info):
                 return env_reward
 
         def env_fn():

@@ -60,6 +60,35 @@ class RewardBaselineCartPole(Reward):
         return env_reward
 
 
+class RewardAnglePenalty(Reward):
+    name = "angle_penalty"
+    env_id = "CartPole-v1"
+
+    def compute(self, obs, action, env_reward, terminated, truncated, info, env_info):
+        pole_angle = abs(obs[2])
+        return env_reward - 0.5 * pole_angle
+
+
+class RewardBalancedPenalty(Reward):
+    name = "balanced_penalty"
+    env_id = "CartPole-v1"
+
+    def compute(self, obs, action, env_reward, terminated, truncated, info, env_info):
+        pole_angle = abs(obs[2])
+        cart_pos = abs(obs[0]) / 2.4
+        return env_reward - 0.3 * pole_angle - 0.1 * cart_pos
+
+
+class RewardPotentialShaping(Reward):
+    name = "potential_shaping"
+    env_id = "CartPole-v1"
+
+    def compute(self, obs, action, env_reward, terminated, truncated, info, env_info):
+        pole_angle = obs[2]
+        potential = -abs(pole_angle)
+        return env_reward + 0.5 * potential
+
+
 class RewardBaselineAcrobot(Reward):
     name = "baseline"
     env_id = "Acrobot-v1"
