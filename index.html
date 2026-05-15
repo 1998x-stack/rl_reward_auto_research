@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="AI自主强化学习奖励函数研究 — Agent在你睡觉时发明、迭代、优化RL奖励函数">
+<meta property="og:title" content="RL Reward Autoresearch">
+<meta property="og:description" content="Inspired by Karpathy's autoresearch — applied to reinforcement learning">
+<meta property="og:type" content="website">
+<title>RL Reward Autoresearch</title>
+<link rel="stylesheet" href="base-dark.css">
+<style>
+:root {
+  --c1: #1D9E75; --c1d: #0F6E56;
+  --c2: #378ADD; --c2d: #185FA5;
+  --c3: #D97706; --c3d: #92400E;
+}
+.hero h1 em {
+  background: linear-gradient(90deg, var(--c1), var(--c2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero h1 em.gradient2 {
+  background: linear-gradient(90deg, var(--c2), var(--c3));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.badge-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; }
+.badge-row img { height:20px; }
+.flow-diagram {
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+  text-align: center;
+  padding: 16px 0;
+}
+.flow-diagram .hl1 { color: var(--c1); }
+.flow-diagram .hl2 { color: var(--c2); }
+.flow-diagram .hl3 { color: var(--c3); }
+.metric-card { border-left: 3px solid var(--border); }
+.metric-card.m1 { border-left-color: var(--c1); }
+.metric-card.m2 { border-left-color: var(--c2); }
+.metric-card.m3 { border-left-color: var(--c3); }
+.metric-card .metric-val { font-size: 28px; font-weight: 700; font-family: var(--mono); margin: 8px 0; }
+.metric-card.m1 .metric-val { color: var(--c1); }
+.metric-card.m2 .metric-val { color: var(--c2); }
+.metric-card.m3 .metric-val { color: var(--c3); }
+.result-table { width: 100%; border-collapse: collapse; }
+.result-table th { text-align: left; color: var(--muted); font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+.result-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 14px; }
+.result-table tr:hover td { background: var(--bg3); }
+.result-table .highlight { color: var(--c1); font-weight: 600; }
+.nav-right { display: flex; gap: 16px; align-items: center; }
+.gh-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 12px; border-radius: 6px;
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--text); font-size: 13px; text-decoration: none;
+  transition: all 0.15s;
+}
+.gh-btn:hover { background: var(--bg4); border-color: var(--border2); }
+.gh-btn svg { width: 16px; height: 16px; fill: currentColor; }
+@media (max-width:640px) {
+  .badge-row { gap: 4px; }
+  .badge-row img { height: 18px; }
+  .flow-diagram { font-size: 11px; }
+}
+</style>
+</head>
+<body>
+
+<nav style="position:sticky;top:0;z-index:100;background:rgba(13,17,23,0.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);">
+  <div class="nav-inner" style="max-width:980px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:12px 20px;">
+    <span class="nav-brand" style="font-size:15px;font-weight:700;color:var(--text);">
+      RL Reward Autoresearch
+      <span style="font-weight:400;color:var(--muted);font-size:12px;margin-left:6px;">RL · PPO · Pareto</span>
+    </span>
+    <div class="nav-right">
+      <a class="nl" href="#architecture">架构</a>
+      <a class="nl" href="#metrics">指标</a>
+      <a class="nl" href="#results">结果</a>
+      <a class="nl" href="#quickstart">开始</a>
+      <a class="gh-btn" href="https://github.com/1998x-stack/rl_reward_auto_research" target="_blank">
+        <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8"/></svg>
+        GitHub
+      </a>
+    </div>
+  </div>
+</nav>
+
+<div class="page" style="max-width:980px;margin:0 auto;padding:0 20px;">
+
+  <section class="hero" style="padding:80px 0 60px;text-align:center;">
+    <div class="hero-badge" style="display:inline-flex;align-items:center;gap:8px;padding:4px 14px;border-radius:99px;background:var(--bg2);border:1px solid var(--border);color:var(--muted);font-size:12px;">
+      <span class="dot" style="width:6px;height:6px;border-radius:50%;background:var(--c1);"></span>
+      灵感源自 Karpathy's autoresearch · 2026
+    </div>
+    <h1 style="font-size:52px;font-weight:800;line-height:1.15;margin:24px 0 16px;letter-spacing:-1px;">
+      AI 自主 <em>RL 奖励函数</em> 研究
+    </h1>
+    <p style="font-size:18px;color:var(--muted);max-width:600px;margin:0 auto 20px;line-height:1.6;">
+      Agent 在你睡觉时发明、迭代、优化强化学习奖励函数<br>
+      基于 Pareto 前沿的多目标自主优化
+    </p>
+    <div class="badge-row" style="justify-content:center;">
+      <img src="https://img.shields.io/badge/python-3.10+-3776AB?logo=python&logoColor=white" alt="Python">
+      <img src="https://img.shields.io/badge/tests-32_passed-10B981" alt="Tests">
+      <img src="https://img.shields.io/badge/license-MIT-00A858" alt="License">
+      <img src="https://img.shields.io/badge/framework-gymnasium-ff6b35" alt="Gymnasium">
+      <img src="https://img.shields.io/badge/algorithm-PPO-8B5CF6" alt="PPO">
+    </div>
+  </section>
+
+  <section id="architecture" style="padding:60px 0;">
+    <div class="section-header" style="margin-bottom:32px;">
+      <div class="hero-badge" style="display:inline-flex;align-items:center;gap:8px;padding:4px 14px;border-radius:99px;background:var(--bg2);border:1px solid var(--border);color:var(--muted);font-size:12px;">
+        <span class="dot" style="width:6px;height:6px;border-radius:50%;background:var(--c2);"></span>
+        架构
+      </div>
+      <h2 style="font-size:28px;font-weight:700;margin:16px 0 8px;">单文件编辑面 · 不可变评估框架</h2>
+      <p style="color:var(--muted);font-size:15px;">Agent 只修改 <code style="color:var(--c1);background:var(--bg3);padding:2px 6px;border-radius:3px;">reward.py</code>，其余全部只读。和 Karpathy 的 autoresearch 同构设计。</p>
+    </div>
+
+    <div class="flow-diagram" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:28px 20px;">
+┌──────────────┐     ┌──────────────┐     ┌──────────────────┐<br>
+│  <span class="hl1">reward.py</span>   │────▶│  <span class="hl2">train.py</span>    │────▶│  <span class="hl3">prepare.py</span>      │<br>
+│  <span style="color:var(--muted);">Agent 编辑</span>   │     │  <span style="color:var(--muted);">PPO 训练</span>    │     │  <span style="color:var(--muted);">3 指标 · Pareto</span>  │──▶ pareto_frontier.json<br>
+│  <span style="color:var(--muted);">1-5 Rewards</span>  │     │  <span style="color:var(--muted);">只读</span>        │     │  <span style="color:var(--muted);">只读</span>            │    (非支配前沿)
+└──────────────┘     └──────────────┘     └──────────────────┘
+    </div>
+
+    <div class="card-grid" style="margin-top:28px;">
+      <div class="card" style="display:flex;flex-direction:column;gap:8px;">
+        <div style="font-family:var(--mono);font-size:13px;color:var(--c1);font-weight:600;">reward.py</div>
+        <div style="color:var(--muted);font-size:13px;">Agent 每次实验编写 1-5 个 Reward* 子类。每个类定义一个环境的奖励塑形策略。</div>
+        <div style="font-size:12px;color:var(--faint);margin-top:4px;">✍️ Agent 编辑</div>
+      </div>
+      <div class="card" style="display:flex;flex-direction:column;gap:8px;">
+        <div style="font-family:var(--mono);font-size:13px;color:var(--c2);font-weight:600;">train.py</div>
+        <div style="color:var(--muted);font-size:13px;">PPO 训练循环（CleanRL 风格）。双轨追踪：agent reward（训练）+ env reward（评估）。</div>
+        <div style="font-size:12px;color:var(--faint);margin-top:4px;">🔒 只读</div>
+      </div>
+      <div class="card" style="display:flex;flex-direction:column;gap:8px;">
+        <div style="font-family:var(--mono);font-size:13px;color:var(--c3);font-weight:600;">prepare.py</div>
+        <div style="color:var(--muted);font-size:13px;">评估框架：环境管理、3 指标计算、Pareto 支配判定、前沿存档。首次运行自动建立基线。</div>
+        <div style="font-size:12px;color:var(--faint);margin-top:4px;">🔒 只读</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="metrics" style="padding:60px 0;">
+    <div class="section-header" style="margin-bottom:32px;">
+      <div class="hero-badge" style="display:inline-flex;align-items:center;gap:8px;padding:4px 14px;border-radius:99px;background:var(--bg2);border:1px solid var(--border);color:var(--muted);font-size:12px;">
+        <span class="dot" style="width:6px;height:6px;border-radius:50%;background:var(--c1);"></span>
+        第一性原理
+      </div>
+      <h2 style="font-size:28px;font-weight:700;margin:16px 0 8px;">三个 Pareto 指标</h2>
+      <p style="color:var(--muted);font-size:15px;">奖励函数只有同时满足"预测准、学得快、跑得稳"才有价值。三者形成 Pareto 前沿。</p>
+    </div>
+
+    <div class="card-grid" style="grid-template-columns:repeat(3,1fr);">
+      <div class="card metric-card m1" style="padding:24px;">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--c1);font-weight:600;margin-bottom:6px;">task_perf</div>
+        <div class="metric-val">1.382</div>
+        <div style="color:var(--muted);font-size:14px;line-height:1.5;margin-bottom:8px;">任务性能 · 最终策略质量</div>
+        <div style="font-size:12px;color:var(--faint);">mean(最后10ep回报) / baseline回报<br>基于原始 env_reward 计算</div>
+      </div>
+      <div class="card metric-card m2" style="padding:24px;">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--c2);font-weight:600;margin-bottom:6px;">task_eff</div>
+        <div class="metric-val">1.000</div>
+        <div style="color:var(--muted);font-size:14px;line-height:1.5;margin-bottom:8px;">样本效率 · 学习速度</div>
+        <div style="font-size:12px;color:var(--faint);">AUC(回报曲线) / baseline_AUC<br>越高=越少样本达到高性能</div>
+      </div>
+      <div class="card metric-card m3" style="padding:24px;">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--c3);font-weight:600;margin-bottom:6px;">task_stab</div>
+        <div class="metric-val">0.831</div>
+        <div style="color:var(--muted);font-size:14px;line-height:1.5;margin-bottom:8px;">训练稳定性 · 跨种子一致性</div>
+        <div style="font-size:12px;color:var(--faint);">1 − CV(跨seed最终回报)<br>1.0=完全一致，0.0=高方差</div>
+      </div>
+    </div>
+
+    <div style="margin-top:28px;padding:16px 20px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:13px;line-height:1.6;">
+      🔒 <strong style="color:var(--text);">防作弊设计：</strong>所有 Pareto 指标基于<strong style="color:var(--c1);">原始环境奖励</strong>计算，而非 agent 自己设计的奖励函数。Agent 无法通过写 <code style="color:var(--c1);background:var(--bg3);padding:1px 5px;border-radius:3px;">return 999.0</code> 来 hack 指标。
+      同时输出 <em>reward metrics</em>（基于 agent reward）作为诊断反馈。
+      <a href="docs/adr/0001-dual-track-metrics.md" style="color:var(--c2);">详见 ADR 0001 →</a>
+    </div>
+  </section>
+
+  <section id="results" style="padding:60px 0;">
+    <div class="section-header" style="margin-bottom:32px;">
+      <div class="hero-badge" style="display:inline-flex;align-items:center;gap:8px;padding:4px 14px;border-radius:99px;background:var(--bg2);border:1px solid var(--border);color:var(--muted);font-size:12px;">
+        <span class="dot" style="width:6px;height:6px;border-radius:50%;background:var(--c3);"></span>
+        首次实验
+      </div>
+      <h2 style="font-size:28px;font-weight:700;margin:16px 0 8px;">CartPole-v1 · Pareto 前沿</h2>
+      <p style="color:var(--muted);font-size:15px;">3 个奖励函数，<strong style="color:var(--c1);">+38.2% 性能提升</strong>，3 个非支配前沿成员。</p>
+    </div>
+
+    <table class="result-table" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+      <thead>
+        <tr>
+          <th>奖励函数</th>
+          <th>task_perf ↑</th>
+          <th>task_eff ↑</th>
+          <th>task_stab ↑</th>
+          <th>设计思路</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="font-family:var(--mono);font-size:13px;">baseline</td>
+          <td>1.000</td>
+          <td>1.000</td>
+          <td>1.000</td>
+          <td style="color:var(--muted);font-size:13px;">环境默认 +1/步</td>
+        </tr>
+        <tr>
+          <td style="font-family:var(--mono);font-size:13px;">angle_penalty</td>
+          <td>1.176</td>
+          <td>1.000</td>
+          <td>0.718</td>
+          <td style="color:var(--muted);font-size:13px;">惩罚杆子角度偏移</td>
+        </tr>
+        <tr style="background:rgba(29,158,117,0.06);">
+          <td style="font-family:var(--mono);font-size:13px;"><span class="highlight">balanced_penalty</span></td>
+          <td class="highlight">1.382</td>
+          <td>1.000</td>
+          <td>0.831</td>
+          <td style="color:var(--muted);font-size:13px;">角度 + 位置双重惩罚</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top:16px;color:var(--muted);font-size:13px;">
+      📖 <a href="docs/cartpole-experiment-report-zh.md" style="color:var(--c2);">完整实验报告（中文）→</a>
+    </div>
+  </section>
+
+  <section id="quickstart" style="padding:60px 0;">
+    <div class="section-header" style="margin-bottom:32px;">
+      <div class="hero-badge" style="display:inline-flex;align-items:center;gap:8px;padding:4px 14px;border-radius:99px;background:var(--bg2);border:1px solid var(--border);color:var(--muted);font-size:12px;">
+        <span class="dot" style="width:6px;height:6px;border-radius:50%;background:var(--c2);"></span>
+        快速开始
+      </div>
+      <h2 style="font-size:28px;font-weight:700;margin:16px 0 8px;">5 分钟上手</h2>
+    </div>
+
+    <div class="code-block" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:0;overflow:hidden;">
+      <div style="display:flex;align-items:center;gap:6px;padding:10px 16px;border-bottom:1px solid var(--border);">
+        <span style="width:10px;height:10px;border-radius:50%;background:#FF5F56;"></span>
+        <span style="width:10px;height:10px;border-radius:50%;background:#FFBD2E;"></span>
+        <span style="width:10px;height:10px;border-radius:50%;background:#27C93F;"></span>
+        <span style="margin-left:8px;color:var(--muted);font-size:11px;">终端</span>
+      </div>
+      <pre style="margin:0;padding:16px;font-family:var(--mono);font-size:13px;line-height:1.7;color:var(--text);overflow-x:auto;"><span style="color:var(--muted);"># 克隆 + 安装</span>
+git clone https://github.com/1998x-stack/rl_reward_auto_research.git
+cd rl_reward_auto_research
+uv sync
+
+<span style="color:var(--muted);"># 首次运行：建立基线 + 评估默认奖励函数</span>
+uv run python prepare.py</pre>
+    </div>
+
+    <div style="margin-top:24px;">
+      <h3 style="font-size:16px;font-weight:600;margin-bottom:12px;">编写你自己的奖励函数</h3>
+      <div class="code-block" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:0;overflow:hidden;">
+        <div style="display:flex;align-items:center;gap:6px;padding:10px 16px;border-bottom:1px solid var(--border);">
+          <span style="width:10px;height:10px;border-radius:50%;background:#FF5F56;"></span>
+          <span style="width:10px;height:10px;border-radius:50%;background:#FFBD2E;"></span>
+          <span style="width:10px;height:10px;border-radius:50%;background:#27C93F;"></span>
+          <span style="margin-left:8px;color:var(--muted);font-size:11px;">reward.py</span>
+        </div>
+        <pre style="margin:0;padding:16px;font-family:var(--mono);font-size:13px;line-height:1.7;color:var(--text);overflow-x:auto;"><span style="color:#ff7b72;">from</span> <span style="color:#d2a8ff;">reward</span> <span style="color:#ff7b72;">import</span> <span style="color:#d2a8ff;">Reward</span>
+<span style="color:#ff7b72;">import</span> <span style="color:#d2a8ff;">numpy</span> <span style="color:#ff7b72;">as</span> <span style="color:#d2a8ff;">np</span>
+
+<span style="color:#ff7b72;">class</span> <span style="color:#d2a8ff;">RewardMyDesign</span>(<span style="color:#d2a8ff;">Reward</span>):
+    name = <span style="color:#a5d6ff;">"my_design"</span>
+    env_id = <span style="color:#a5d6ff;">"CartPole-v1"</span>
+
+    <span style="color:#ff7b72;">def</span> <span style="color:#d2a8ff;">compute</span>(<span style="color:#ff7b72;">self</span>, obs, action, env_reward, terminated, truncated, info, env_info):
+        pole_angle = <span style="color:#79c0ff;">abs</span>(obs[<span style="color:#79c0ff;">2</span>])
+        <span style="color:#ff7b72;">return</span> env_reward - <span style="color:#79c0ff;">0.3</span> * pole_angle</pre>
+      </div>
+      <p style="color:var(--muted);font-size:13px;margin-top:8px;">保存后运行 <code style="color:var(--c1);background:var(--bg3);padding:2px 6px;border-radius:3px;">uv run python prepare.py</code> — 自动发现、训练、评估。</p>
+    </div>
+  </section>
+
+  <section id="envs" style="padding:60px 0;">
+    <h2 style="font-size:28px;font-weight:700;margin-bottom:24px;">支持的环境</h2>
+    <table class="result-table" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+      <thead>
+        <tr>
+          <th>环境</th>
+          <th>动作空间</th>
+          <th>观测维度</th>
+          <th>奖励类型</th>
+          <th>关键挑战</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="font-family:var(--mono);font-size:13px;">CartPole-v1</td><td>离散 (2)</td><td>4</td><td>稠密 (+1/步)</td><td style="color:var(--muted);font-size:13px;">塑形空间小，需改进效率</td></tr>
+        <tr><td style="font-family:var(--mono);font-size:13px;">Acrobot-v1</td><td>离散 (3)</td><td>6</td><td>稀疏 (-1/步)</td><td style="color:var(--muted);font-size:13px;">稀疏→稠密转换收益大</td></tr>
+        <tr><td style="font-family:var(--mono);font-size:13px;">MountainCar-v0</td><td>离散 (3)</td><td>2</td><td>稀疏 (-1/步)</td><td style="color:var(--muted);font-size:13px;">经典难题，塑形决定性</td></tr>
+        <tr><td style="font-family:var(--mono);font-size:13px;">Pendulum-v1</td><td>连续 (1)</td><td>3</td><td>稠密 (负成本)</td><td style="color:var(--muted);font-size:13px;">连续动作，塑形空间丰富</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="strategy" style="padding:60px 0;">
+    <h2 style="font-size:28px;font-weight:700;margin-bottom:24px;">迭代策略</h2>
+    <div class="card-grid" style="grid-template-columns:repeat(3,1fr);">
+      <div class="card metric-card m2" style="padding:20px;">
+        <div style="font-size:14px;font-weight:700;margin-bottom:6px;">Exploit</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">默认策略</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.5;">对前沿最优 reward 做局部变异——调整系数、换惩罚项、改塑形形式</div>
+      </div>
+      <div class="card metric-card m3" style="padding:20px;">
+        <div style="font-size:14px;font-weight:700;margin-bottom:6px;">Explore</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">连续丢弃后触发</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.5;">发明全新奖励结构——不同塑形哲学、跨环境思路迁移</div>
+      </div>
+      <div class="card metric-card m1" style="padding:20px;">
+        <div style="font-size:14px;font-weight:700;margin-bottom:6px;">Combine</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">每 10 次实验</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.5;">合并两个前沿 reward——加权平均、乘积、条件切换</div>
+      </div>
+    </div>
+  </section>
+
+  <footer style="padding:60px 0;border-top:1px solid var(--border);text-align:center;">
+    <p style="color:var(--muted);font-size:13px;">
+      灵感源自 <a href="https://github.com/karpathy/autoresearch" style="color:var(--c2);">@karpathy/autoresearch</a> 和
+      <a href="https://github.com/1998x-stack/alpha-autoresearch" style="color:var(--c2);">alpha_autoresearch</a>
+    </p>
+    <div style="display:flex;gap:16px;justify-content:center;margin-top:12px;">
+      <a href="https://github.com/1998x-stack/rl_reward_auto_research" style="color:var(--muted);font-size:13px;">GitHub</a>
+      <a href="README_ZH.md" style="color:var(--muted);font-size:13px;">README (中文)</a>
+      <a href="CONTEXT.md" style="color:var(--muted);font-size:13px;">CONTEXT</a>
+      <a href="docs/cartpole-experiment-report-zh.md" style="color:var(--muted);font-size:13px;">实验报告</a>
+    </div>
+    <p style="color:var(--faint);font-size:12px;margin-top:16px;">MIT License · 2026</p>
+  </footer>
+
+</div>
+
+<script>
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const id = a.getAttribute('href').slice(1);
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+</script>
+
+</body>
+</html>
