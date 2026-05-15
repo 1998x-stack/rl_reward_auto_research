@@ -10,21 +10,31 @@ from metrics import (
 
 
 def test_performance_positive_returns():
-    returns = [100, 150, 200, 250, 300, 350, 400, 420, 440, 460, 470, 480, 490, 495, 498]
-    perf = compute_performance(returns, baseline_return=400.0, direction="positive")
+    seed_returns = [[100, 150, 200, 250, 300, 350, 400, 420, 440, 460, 470, 480, 490, 495, 498]]
+    perf = compute_performance(seed_returns, baseline_return=400.0, direction="positive")
     assert perf > 1.0
     assert perf < 1.3
 
 
 def test_performance_negative_returns():
-    returns = [-200, -180, -160, -150, -140, -130, -120, -110, -100, -95, -90, -85, -80]
-    perf = compute_performance(returns, baseline_return=-100.0, direction="negative")
+    seed_returns = [[-200, -180, -160, -150, -140, -130, -120, -110, -100, -95, -90, -85, -80]]
+    perf = compute_performance(seed_returns, baseline_return=-100.0, direction="negative")
     assert perf > 0.0
 
 
+def test_performance_multi_seed_average():
+    seed_returns = [
+        [100, 200, 300, 400, 500],
+        [100, 200, 300, 400, 400],
+        [100, 200, 300, 400, 300],
+    ]
+    perf = compute_performance(seed_returns, baseline_return=400.0, direction="positive")
+    assert perf == pytest.approx(0.7, abs=0.01)
+
+
 def test_sample_efficiency_positive():
-    returns = [10, 20, 40, 80, 160, 300, 400, 450, 470, 480]
-    eff = compute_sample_efficiency(returns, baseline_returns=[10]*10, direction="positive")
+    seed_returns = [[10, 20, 40, 80, 160, 300, 400, 450, 470, 480]]
+    eff = compute_sample_efficiency(seed_returns, baseline_returns=[10]*10, direction="positive")
     assert eff > 0.0
 
 

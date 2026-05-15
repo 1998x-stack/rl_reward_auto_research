@@ -1,28 +1,41 @@
-from typing import Dict, List
+from typing import List
 
 import numpy as np
 
 
-def compute_performance(returns: List[float], baseline_return: float, direction: str) -> float:
-    if len(returns) == 0:
+def compute_performance(seed_returns: List[List[float]], baseline_return: float, direction: str) -> float:
+    if not seed_returns or all(len(r) == 0 for r in seed_returns):
         return 0.0
-    n = min(10, len(returns))
-    final_mean = float(np.mean(returns[-n:]))
-    return normalize_metric(final_mean, baseline_return, direction)
+    seed_means = []
+    for returns in seed_returns:
+        if len(returns) == 0:
+            continue
+        n = min(10, len(returns))
+        seed_means.append(float(np.mean(returns[-n:])))
+    if not seed_means:
+        return 0.0
+    return normalize_metric(float(np.mean(seed_means)), baseline_return, direction)
 
 
 def compute_sample_efficiency(
-    returns: List[float],
+    seed_returns: List[List[float]],
     baseline_returns: List[float],
     direction: str,
 ) -> float:
-    if len(returns) == 0:
+    if not seed_returns or all(len(r) == 0 for r in seed_returns):
         return 0.0
-    auc = float(np.trapezoid(np.array(returns, dtype=float)))
     baseline_auc = float(np.trapezoid(np.array(baseline_returns, dtype=float)))
     if abs(baseline_auc) < 1e-8:
         return 1.0
-    return normalize_metric(auc, baseline_auc, direction)
+    seed_aucs = []
+    for returns in seed_returns:
+        if len(returns) == 0:
+            continue
+        auc = float(np.trapezoid(np.array(returns, dtype=float)))
+        seed_aucs.append(auc)
+    if not seed_aucs:
+        return 0.0
+    return normalize_metric(float(np.mean(seed_aucs)), baseline_auc, direction)
 
 
 def compute_stability(seed_returns: List[List[float]]) -> float:
@@ -62,16 +75,14 @@ def compute_all_metrics(
     baseline_returns: List[float],
     direction: str,
 ) -> tuple:
-    primary_seed = task_seed_returns[0] if task_seed_returns else []
     task_metrics = {
-        "perf": compute_performance(primary_seed, baseline_return, direction),
-        "eff": compute_sample_efficiency(primary_seed, baseline_returns, direction),
+        "perf": compute_performance(task_seed_returns, baseline_return, direction),
+        "eff": compute_sample_efficiency(task_seed_returns, baseline_returns, direction),
         "stab": compute_stability(task_seed_returns),
     }
-    reward_primary = reward_seed_returns[0] if reward_seed_returns else []
     reward_metrics = {
-        "perf": compute_performance(reward_primary, baseline_return, direction),
-        "eff": compute_sample_efficiency(reward_primary, baseline_returns, direction),
+        "perf": compute_performance(reward_seed_returns, baseline_return, direction),
+        "eff": compute_sample_efficiency(reward_seed_returns, baseline_returns, direction),
         "stab": compute_stability(reward_seed_returns),
     }
     return task_metrics, reward_metrics

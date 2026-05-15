@@ -72,9 +72,15 @@ def establish_baselines(output_results: List[Dict]) -> Dict[str, Dict]:
             env_info=env_info,
         )
 
+        # Average final return across all seeds for robust baseline
+        seed_finals = []
+        for returns in task_returns:
+            n = min(10, len(returns))
+            seed_finals.append(float(np.mean(returns[-n:])))
+        baseline_return = float(np.mean(seed_finals))
+
+        # Use first seed's episode returns as reference curve for AUC normalization
         primary_returns = task_returns[0]
-        n = min(10, len(primary_returns))
-        baseline_return = float(np.mean(primary_returns[-n:]))
 
         baselines[env_id] = {
             "baseline_return": baseline_return,
