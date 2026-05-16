@@ -1,0 +1,10 @@
+Metadata-Version: 2.4
+Name: rl-reward-autoresearch
+Version: 0.1.0
+Summary: Autonomous RL reward function research — Pareto optimization for gymnasium classic-control
+Requires-Python: >=3.10
+Requires-Dist: gymnasium[classic-control]>=1.0.0
+Requires-Dist: torch>=2.0.0
+Requires-Dist: numpy>=1.24.0
+Requires-Dist: loguru>=0.7.0
+Requires-Dist: pytest>=7.0.0
